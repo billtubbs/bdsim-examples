@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bdsim-examples"
+version = "0.1.0"
+description = "Examples demonstrating the bdsim Python package for block diagram simulation"
+requires-python = ">=3.9"
+authors = [
+    {name = "Bill Tubbs", email = "bill.tubbs@me.com"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+
+dependencies = [
+    "bdsim",
+    "numpy",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "jupyter",
+    "jupyterlab",
+    "ipython",
+    "ipykernel",
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 79
+
+[tool.ruff.format]
+# Use Ruff as the formatter (replaces black)
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+# Basic sensible defaults; adjust to taste
+select = ["E", "F", "I"]
