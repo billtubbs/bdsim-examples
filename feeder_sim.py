@@ -39,14 +39,18 @@ d = np.array([16, 14, 11], dtype=int)
 distance = np.array([116.0, 99.0, 82.4], dtype=float)
 
 sample_period = 5.0
-n_samples = 120
+total_duration = 150.0
+step_time = 0.0
+n_samples = int(total_duration / sample_period)
 time = sample_period * np.arange(n_samples)
+step_index = int(step_time / sample_period)
 
 
 def feeder_response(Ki, Ti, delay_steps, n_steps):
     """Step response of one discrete feeder model."""
     y = np.zeros(n_steps, dtype=float)
-    u = np.ones(n_steps, dtype=float)
+    u = np.zeros(n_steps, dtype=float)
+    u[step_index:] = 1.0
 
     for k in range(n_steps):
         delayed_input = u[k - delay_steps] if k >= delay_steps else 0.0
@@ -89,38 +93,35 @@ print(f"Saved plot to {output_path}")
 plt.show()
 
 # --------------------------------------------------------------------
-# Exact-delay speed scenarios.
-# For each feeder, use a slow (0.5x), medium (1.0x), and fast (2.0x)
-# nominal speed. Since delay scales as 1 / speed at fixed distance,
-# these give delays of 2d, d, and d/2 samples.
+# Mass-flow speed scenarios.
+# The transport delay is fixed by the conveyor geometry and does not change
+# with feeder speed. Instead, different feeder speeds change the ore flow rate,
+# which scales the feeder gains. We therefore compare slow/medium/fast flow
+# conditions by scaling the gain K_i while keeping d_i fixed.
 # --------------------------------------------------------------------
 from itertools import product
 
-slow_delay = 2 * d
-medium_delay = d
-fast_delay = np.rint(d / 2).astype(int)
-
-mode_delay = {
-    "slow": slow_delay,
-    "medium": medium_delay,
-    "fast": fast_delay,
+flow_factors = {
+    "slow": 0.5,
+    "medium": 1.0,
+    "fast": 2.0,
 }
 
-speed_by_mode = {
-    mode: distance / (delay * sample_period)
-    for mode, delay in mode_delay.items()
-}
-
-# Top three panels: show the three speed scenarios for each feeder.
-# Bottom panel: show all combinatorial combinations with a single low-alpha
-# color to reveal the spread of possible combined outputs.
+# Top three panels: show one gain-scaled scenario for each feeder.
+# Bottom panel: show all combinatorial scenarios with a single low-alpha color
+# to reveal the spread of possible combined outputs.
 fig, axes = plt.subplots(4, 1, figsize=(7.5, 1 + 1.5 * 4), sharex=True)
-fig.suptitle("Feeder speed scenario sweep", fontsize=16)
+fig.suptitle("Feeder flow-rate scenario sweep", fontsize=16)
 
 for feeder_idx in range(3):
     for mode in ("slow", "medium", "fast"):
-        delay_steps = mode_delay[mode][feeder_idx]
-        y = feeder_response(K[feeder_idx], T[feeder_idx], int(delay_steps), n_samples)
+        gain_scale = flow_factors[mode]
+        y = feeder_response(
+            K[feeder_idx] * gain_scale,
+            T[feeder_idx],
+            int(d[feeder_idx]),
+            n_samples,
+        )
         axes[feeder_idx].plot(time, y, linewidth=2, alpha=0.85)
 
     axes[feeder_idx].set_ylabel("Output")
@@ -129,13 +130,13 @@ for feeder_idx in range(3):
 
 combined_scenarios = []
 for mode_tuple in product(["slow", "medium", "fast"], repeat=3):
-    delay_steps = np.array(
-        [mode_delay[mode][idx] for idx, mode in enumerate(mode_tuple)],
-        dtype=int,
+    gain_vector = np.array(
+        [flow_factors[mode] for mode in mode_tuple],
+        dtype=float,
     )
     feeder_outputs = [
-        feeder_response(K[i], T[i], int(delay), n_samples)
-        for i, delay in enumerate(delay_steps)
+        feeder_response(K[i] * gain_vector[i], T[i], int(d[i]), n_samples)
+        for i in range(3)
     ]
     combined_scenarios.append(np.sum(feeder_outputs, axis=0))
 
