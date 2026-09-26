@@ -1,0 +1,7 @@
+bdsim
+numpy
+pandas
+control
+matplotlib
+jupyter
+ipython
