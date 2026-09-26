@@ -19,9 +19,8 @@ with a unit step input and a 5 s sample period. The total feed to the SAG mill i
 the sum of the three normalized feeder outputs.
 """
 
-# I generally do not use type annotations in my work.
-
 import os
+from itertools import product
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,8 +33,9 @@ K = np.array([0.3892, 0.4148, 0.4823], dtype=float)
 T = np.array([-0.5919, -0.5058, -0.5048], dtype=float)
 d = np.array([16, 14, 11], dtype=int)
 
-# Table I: feeder-to-weight-meter distance (converted from meters to delay steps at
-# 5 s sampling time; the transport delays are represented by z^-d_i in the model)
+# Table I: feeder-to-weight-meter distance (converted from meters to delay
+# steps at 5 s sampling time; the transport delays are represented by z^-d_i
+# in the model)
 distance = np.array([116.0, 99.0, 82.4], dtype=float)
 
 sample_period = 5.0
@@ -94,12 +94,11 @@ plt.show()
 
 # --------------------------------------------------------------------
 # Mass-flow speed scenarios.
-# The transport delay is fixed by the conveyor geometry and does not change
+# The transport delay is fixed by the downstreamconveyor and does not change
 # with feeder speed. Instead, different feeder speeds change the ore flow rate,
 # which scales the feeder gains. We therefore compare slow/medium/fast flow
 # conditions by scaling the gain K_i while keeping d_i fixed.
 # --------------------------------------------------------------------
-from itertools import product
 
 flow_factors = {
     "slow": 0.5,
